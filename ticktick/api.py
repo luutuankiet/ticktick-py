@@ -9,10 +9,6 @@ from ticktick.oauth2 import OAuth2
 
 
 
-USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:130.0) Gecko/20100101 Firefox/130.0"
-X_DEVICE_ = '{"platform":"web","os":"macOS 10.15","device":"Firefox 130.0","name":"","version":6060,"id":"66666db22ee6d03d8bb8def7","channel":"website","campaign":"","websocket":"66fc8e566740d02c0c53973a"}'
-
-
 class TickTickClient:
     BASE_URL = 'https://api.ticktick.com/api/v2/'
 
@@ -34,8 +30,11 @@ class TickTickClient:
             RunTimeError: If the login was not successful.
         """
         # Class members
-        self.HEADERS = {'User-Agent': USER_AGENT,
-                        'x-device': X_DEVICE_}
+        
+        self.USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:130.0) Gecko/20100101 Firefox/130.0"
+        self.X_DEVICE_ = '{"platform":"web","os":"macOS 10.15","device":"Firefox 130.0","name":"","version":6060,"id":"66666db22ee6d03d8bb8def7","channel":"website","campaign":"","websocket":"66fc8e566740d02c0c53973a"}'
+        self.HEADERS = {'User-Agent': self.USER_AGENT,
+                        'x-device': self.X_DEVICE_}
         self.access_token = None
         self.cookies = {}
         self.time_zone = ''
