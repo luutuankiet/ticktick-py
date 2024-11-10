@@ -1,5 +1,3 @@
-import secrets
-
 from ticktick.managers.focus import FocusTimeManager
 from ticktick.managers.habits import HabitManager
 from ticktick.managers.pomo import PomoManager
@@ -10,19 +8,17 @@ from ticktick.managers.tasks import TaskManager
 from ticktick.oauth2 import OAuth2
 
 
+
+USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:130.0) Gecko/20100101 Firefox/130.0"
+X_DEVICE_ = '{"platform":"web","os":"macOS 10.15","device":"Firefox 130.0","name":"","version":6060,"id":"66666db22ee6d03d8bb8def7","channel":"website","campaign":"","websocket":"66fc8e566740d02c0c53973a"}'
+
+
 class TickTickClient:
     BASE_URL = 'https://api.ticktick.com/api/v2/'
 
     OPEN_API_BASE_URL = 'https://api.ticktick.com'
 
     INITIAL_BATCH_URL = BASE_URL + 'batch/check/0'
-
-    USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:95.0) Gecko/20100101 Firefox/95.0"
-    X_DEVICE_ = '{"platform":"web","os":"OS X","device":"Firefox 95.0","name":"unofficial api!","version":4531,' \
-                '"id":"6490' + secrets.token_hex(10) + '","channel":"website","campaign":"","websocket":""}'
-
-    HEADERS = {'User-Agent': USER_AGENT,
-               'x-device': X_DEVICE_}
 
     def __init__(self, username: str, password: str, oauth: OAuth2) -> None:
         """
@@ -38,7 +34,8 @@ class TickTickClient:
             RunTimeError: If the login was not successful.
         """
         # Class members
-
+        self.HEADERS = {'User-Agent': USER_AGENT,
+                        'x-device': X_DEVICE_}
         self.access_token = None
         self.cookies = {}
         self.time_zone = ''
@@ -101,7 +98,7 @@ class TickTickClient:
             'remember': True
         }
 
-        response = self.http_post(url, json=user_info, params=parameters, headers=self.HEADERS)
+        response = self.http_post(url, json=user_info, params=parameters)
 
         self.access_token = response['token']
         self.cookies['t'] = self.access_token
@@ -133,7 +130,7 @@ class TickTickClient:
         parameters = {
             'includeWeb': True
         }
-        response = self.http_get(url, params=parameters, cookies=self.cookies, headers=self.HEADERS)
+        response = self.http_get(url, params=parameters, cookies=self.cookies)
 
         self.time_zone = response['timeZone']
         self.profile_id = response['id']
@@ -152,7 +149,7 @@ class TickTickClient:
         Raises:
             RunTimeError: If the request could not be completed.
         """
-        response = self.http_get(self.INITIAL_BATCH_URL, cookies=self.cookies, headers=self.HEADERS)
+        response = self.http_get(self.INITIAL_BATCH_URL, cookies=self.cookies)
 
         # Inbox Id
         self.inbox_id = response['inboxId']
@@ -181,7 +178,13 @@ class TickTickClient:
         Raises:
             RunTimeError: If the request could not be completed.
         """
-        response = self._session.post(url, **kwargs)
+
+        if 'headers' not in kwargs:
+            response = self._session.post(url, headers=self.HEADERS, **kwargs)
+ 
+        else:
+            kwargs['headers'].update(self.HEADERS)
+            response = self._session.post(url, **kwargs)
         self.check_status_code(response, 'Could Not Complete Request')
 
         try:
@@ -203,9 +206,11 @@ class TickTickClient:
         Raises:
             RunTimeError: If the request could not be completed.
         """
-        response = self._session.get(url, **kwargs)
-        self.check_status_code(response, 'Could Not Complete Request')
-
+        if 'headers' not in kwargs:
+            response = self._session.get(url, headers=self.HEADERS, **kwargs)
+        else:
+            kwargs['headers'].update(self.HEADERS)
+            response = self._session.get(url, **kwargs)
         try:
             return response.json()
         except ValueError:
